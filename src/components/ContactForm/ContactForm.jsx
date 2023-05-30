@@ -1,54 +1,59 @@
-import { useState } from 'react';
 import css from './ContactForm.module.css';
-import PropTypes from 'prop-types';
+import { useDispatch, useSelector } from 'react-redux';
+import { getContacts } from 'redux/selectors';
+import { nanoid } from '@reduxjs/toolkit';
+import { toast } from 'react-toastify';
+import { addContact } from 'redux/contactsSlice';
 
-export const ContactForm = ({ addContact }) => {
-  const [name, setName] = useState('');
-  const [number, setNumber] = useState('');
+export const ContactForm = () => {
+  const dispatch = useDispatch();
+  const contacts = useSelector(getContacts);
 
-  const onChangeInput = evt => {
-    const { name, value } = evt.currentTarget;
+  const handleSubmit = event => {
+    event.preventDefault();
 
-    name === 'name' ? setName(value) : setNumber(value);
+    const contact = {
+      id: nanoid(),
+      name: event.currentTarget.elements.name.value,
+      number: event.currentTarget.elements.number.value,
+    };
+
+    const isExist = contacts.find(
+      ({ name }) => name.toLowerCase() === contact.name.toLowerCase()
+    );
+
+    if (isExist) {
+      return toast.console.warn(`%{contact.name} is already in contacts`);
+    }
+    dispatch(addContact(contact));
+    event.currentTarget.reset();
   };
 
   return (
     <>
-      <form
-        className={css.formstyle}
-        onSubmit={evt => {
-          evt.preventDefault();
-          addContact({ name, number });
-          setName('');
-          setNumber('');
-        }}
-      >
-        <label className={css.label}>
+      <form className={css.form} onSubmit={handleSubmit}>
+        <label className={css.label} htmlFor={nanoid()}>
           Name
-          <br />
           <input
             className={css.input}
-            onChange={onChangeInput}
-            value={name}
             type="text"
             name="name"
             pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
             title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
+            id={nanoid()}
             required
           />
         </label>
-        <br />
-        <label htmlFor="">
+
+        <label className={css.label} htmlFor={nanoid()}>
           Number
-          <br />
           <input
             className={css.input}
-            onChange={onChangeInput}
-            value={number}
             type="tel"
             name="number"
             pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
             title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
+            id={nanoid()}
             required
           />
         </label>
@@ -59,8 +64,4 @@ export const ContactForm = ({ addContact }) => {
       </form>
     </>
   );
-};
-
-ContactForm.propTypes = {
-  addContact: PropTypes.func.isRequired,
 };
